@@ -22,7 +22,7 @@ jobs:
       
       - name: Gender config.json
         run: |
-          python generate_config.py
+          python autogend.py
 
       - name: Commit & Push
         run: |
