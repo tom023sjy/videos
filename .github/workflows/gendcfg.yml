@@ -17,11 +17,11 @@ jobs:
         
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+      
       - name: Install Depences
         run: |
           sudo apt update && sudo apt install -y ffmpeg
+      
       - name: Gender config.json
         run: |
           python autogend.py
