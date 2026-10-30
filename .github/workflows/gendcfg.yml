@@ -2,8 +2,6 @@ name: Auto generate config.json
 
 on:
   push:
-    paths:
-      - 'ts_files/**/*.ts'      # 如果你的 ts 不在 ts_files/ 下，改成实际路径，例如 '**/*.ts'
   workflow_dispatch:
 
 permissions:
