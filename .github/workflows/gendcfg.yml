@@ -1,35 +1,57 @@
-name: Auto genderate file changes
+name: Auto generate config.json
 
 on:
   push:
     paths:
-      - 'ts_files/*.ts'
-      - 'ts_files/**/*.ts'
+      - 'ts_files/**/*.ts'      # 如果你的 ts 不在 ts_files/ 下，改成实际路径，例如 '**/*.ts'
   workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-gen-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   generate:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # pull --rebase 需要完整历史
+
       - name: Set up Python
-        uses: actions/setup-python@v4
-      
-      - name: Install Depences
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
         run: |
-          sudo apt update && sudo apt install -y ffmpeg
-      
-      - name: Gender config.json
-        run: |
-          python autogend.py
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Generate config.json
+        run: python autogend.py
 
       - name: Commit & Push
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ ! -f config.json ]; then
+            echo "::error::config.json 未生成，检查 autogend.py"
+            exit 1
+          fi
+
           git add config.json
-          git diff --staged --quiet || git commit -m "自动更新 File Data"
-          git push
+          if git diff --staged --quiet; then
+            echo "config.json 无变化，跳过提交"
+            exit 0
+          fi
+
+          git commit -m "自动更新 config.json"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
